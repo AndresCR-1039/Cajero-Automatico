@@ -1,0 +1,8 @@
+{
+    "pin": "1234",
+    "saldo": 500000,
+    "retiradoHoy": 0,
+    "limiteDiario": 300000,
+    "donacionesTotales": 0,
+    "movimientos": []
+}
