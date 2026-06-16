@@ -2,11 +2,12 @@ from cajero import cargarDatos, verificarPin, mostrarMenu, consultarSaldo, depos
 
 def main():
 
-    datos = cargarDatos()
-
-    if verificarPin() == False:
+    
+    if not verificarPin():
         print("Acceso denegado PIN incorrecto 3 veces")
         return
+    
+    datos = cargarDatos()
     
     opcion = ""
     while opcion != "7" :
