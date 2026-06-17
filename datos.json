@@ -1,8 +1,31 @@
 {
-    "pin": "1234",
-    "saldo": 500000,
-    "retiradoHoy": 0,
-    "limiteDiario": 300000,
-    "donacionesTotales": 0,
-    "movimientos": []
+    "jaimeH": {
+        "pin": "1234",
+        "saldo": 500000,
+        "retiradoHoy": 0,
+        "limiteDiario": 300000,
+        "ultimaFechaRetiro": "",
+        "donacionesTotales": 0,
+        "movimientos": []
+    },
+
+    "danielM": {
+        "pin": "4321",
+        "saldo": 500000,
+        "retiradoHoy": 0,
+        "limiteDiario": 300000,
+        "ultimaFechaRetiro": "",
+        "donacionesTotales": 0,
+        "movimientos": []
+    },
+
+    "sebastianC": {
+        "pin": "9876",
+        "saldo": 500000,
+        "retiradoHoy": 0,
+        "limiteDiario": 300000,
+        "ultimaFechaRetiro": "",
+        "donacionesTotales": 0,
+        "movimientos": []
+    }
 }

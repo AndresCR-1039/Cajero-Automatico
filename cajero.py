@@ -1,5 +1,6 @@
 # Importamos para poder usar el .json
 import json
+from datetime import date
 
 # Defino la funcion cargarDatos vacio pues siempre abre el mismo archivo
 def cargarDatos():
@@ -16,17 +17,28 @@ def guardarDatos(datos):
     # con el ensure_ascii=False hacemos que pueda guardar tildes y ñ para que no quede raro el texto
     archivo.close() # con esto cerramos el archivo 
 
+def verificarFechaRetiro(datos):
+    hoy = str(date.today())
+    if datos["ultimaFechaRetiro"] != hoy:
+        datos["retiradoHoy"] = 0
+        datos["ultimaFechaRetiro"] = hoy
+    return datos
+
 # Defino la funcion verificarPin para validar los pin correcto incorrectos y bloquear la tarjeta cuando se llegue a 3 intentos fallidos
-def verificarPin():
+def iniciarSesion():
     datos = cargarDatos() # Cargo los datos de json para poder validar con el pin que se engresa
     intentos = 0 # incialiso en 0 para poder sumar intentos y poder validar cuando llegue a 3 intentos fallidos
+    usuario = input("Ingrese su usuario: ") # le pido al usuario que ingrese su usuario para validar que exista en el json
+    if usuario not in datos: # con este if valido que el usuario exista en el json
+        print("Usuario no encontrado.")
+        return None # si el usuario no existe retornamos None para que no pueda usar el cajero
 
     while intentos < 3: # creamos el bucle con la condicion que intentos sea menos a 3 
         pin = input("Ingrese su PIN: ") # le pedimos al usuario el pin
 
-        if pin == datos["pin"]: # creamos el if para validar si el pin ingresado es igual a el pin en el json
-            print("PIN correcto.") # le damos un mensaje que el pin es correcto
-            return True # retornamos True para que de acceso al cajero
+        if pin == datos[usuario]["pin"]: # creamos el if para validar si el pin ingresado es igual a el pin en el json
+            print(f"PIN correcto. Bienvenido, {usuario}.") # le damos un mensaje que el pin es correcto
+            return usuario # retornamos el nombre de usuario para que de acceso al cajero
         else: # declaramos el else para cuando el pin sea diferente al guardado en el json
             intentos += 1 # le sumamos a intentos 1 para ir aumentando en 1 
             restantes = 3 - intentos # le damos a restantes el resultado de 3 - los intentos fallidos para determinar cuando este en 0 
@@ -34,7 +46,7 @@ def verificarPin():
                 print(f"PIN incorrecto. quedan {restantes} intento.") # le muestra al usuario que el pin fue incorrecto y le dice cuantos intentos le quedan
     print("Tarjeta bloqueada. Demaciados intentos fallidos.") # cuando sale del while sin returnar true quiere decir que no logro con los 3 intentos
     # al tener 3 intentos fallidos la tarjeta se bloquea y por esto se le manda este mensaje
-    return False # se returna False para decir que no puede usar el cajero
+    return None # se returna None para decir que no puede usar el cajero
 
 # defino la funcion mostrarMenu para mostrar el menu al usuario y pedir la opcion
 def mostrarMenu():
@@ -54,6 +66,7 @@ def mostrarMenu():
 
 # defino la funcion consultarSaldo que recibe el diccionario datos despues le imprimimos los datos de este diccionario a el usuario
 def consultarSaldo(datos):
+    datos = verificarFechaRetiro(datos)
     print("\n=========================")
     print("    SALDO DISPONIBLE")
     print("=========================")
@@ -77,14 +90,14 @@ def depositar(datos):
     if monto <= 0: # con este if validamos que el ingreso no sea 0 o negativo
         print("Error el monto debe ser mayor a 0.") 
         return datos # Guardamos en el json sin modificar
-    datos["saldo"] = datos["saldo"] + monto  # con este actualizamos el saldo con el monto
-    datos["movimientos"].append(f"[+] Deposito: {monto:,} | Saldo: {datos['saldo']:,}") # con este sumamos un movimientos para despues poder mostrarlos
-    guardarDatos(datos) #retornamos los cambios al json
-    print(f" Deposito exitos. tu nuevo saldo es: {datos['saldo']:,}") # le damos el mensaje exitoso al cliente
+    datos["saldo"] = datos["saldo"] + monto
+    datos["movimientos"].append(f"[+] Deposito: {monto:,} | Saldo: {datos['saldo']:,}")
+    print(f" Deposito exitos. tu nuevo saldo es: {datos['saldo']:,}")
     return datos
 
 # declaro la funcion retirar
 def retirar(datos):
+    datos = verificarFechaRetiro(datos)
     print("\n=========================")
     print("       RETIRAR           ")
     print("=======================")
@@ -112,12 +125,11 @@ def retirar(datos):
         print(f"error: supera el limite diario. queda disponible hoy {restante:,} ")
         return datos # si lo excede retornamos sin modificar
     
-    datos["saldo"] = datos["saldo"] - monto # actualizamos el saldo menos el monto retirado
-    datos["retiradoHoy"] = datos["retiradoHoy"] + monto # le sumamos al limite de retiro lo que se acava de retirar
-    datos["movimientos"].append(f"[-] Retiro: {monto:,} | Saldo: {datos['saldo']:,}") # sumamos a movimientos los datos para despues poder inprimir el historial
-    guardarDatos(datos) # se guarda los datos en el json
-    print(f"\n Retiro exitoso su nuevo saldo es: {datos['saldo']:,}") # le mostramos mediante mensaje el exito y el nuevo saldo
-    return datos #retornamos los datos modificados
+    datos["saldo"] = datos["saldo"] - monto
+    datos["retiradoHoy"] = datos["retiradoHoy"] + monto
+    datos["movimientos"].append(f"[-] Retiro: {monto:,} | Saldo: {datos['saldo']:,}")
+    print(f"\n Retiro exitoso su nuevo saldo es: {datos['saldo']:,}")
+    return datos
 
 #defino la funcion cambiarPin
 def cambiarPin(datos):
@@ -151,11 +163,10 @@ def cambiarPin(datos):
         print("Error: la confirmacion no coincide.")
         return datos # retornamos sin cambios
     
-    datos["pin"] = pinNuevo # modificamos el pin 
-    datos["movimientos"].append("[!] Cambio de PIN exitoso.") # le sumamos a movimientos para despues poder consultarlo
-    guardarDatos(datos) # guardamos los datos en json
-    print("PIN cambiado correctamente.") # mensaje de cambio correcto
-    return datos # retornamos 
+    datos["pin"] = pinNuevo
+    datos["movimientos"].append("[!] Cambio de PIN exitoso.")
+    print("PIN cambiado correctamente.")
+    return datos
 
 # Defino la funcion verHistorial
 def verHistorial(datos):
@@ -207,14 +218,13 @@ def donar(datos):
         print("Saldo insuficiente para realizar la donacion.") # si el saldo es insuficiente se manda error y se retoran sin modificar
         return datos
     
-    datos["saldo"] = datos["saldo"] - monto # se modifica el saldo
-    datos["donacionesTotales"] = datos["donacionesTotales"] + monto # se modifica las dornaciones totales
-    datos["movimientos"].append(f"[!] Donacion: {monto:,} | Saldo: {datos['saldo']:,}") # se actualiza un movimiento para despues poder listar
-    guardarDatos(datos) # se guardan los datos en el json
+    datos["saldo"] = datos["saldo"] - monto
+    datos["donacionesTotales"] = datos["donacionesTotales"] + monto
+    datos["movimientos"].append(f"[!] Donacion: {monto:,} | Saldo: {datos['saldo']:,}")
     print(f"Gracias por tu donacion de {monto:,}") 
     print(f"Has donado un total de {datos['donacionesTotales']:,}")
-    print("Los niños te lo agradeseran") # mensajes de agradecimiento
-    return datos # se retorna datos
+    print("Los niños te lo agradeseran")
+    return datos
 
 
 
